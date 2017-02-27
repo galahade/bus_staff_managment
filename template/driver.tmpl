@@ -1,0 +1,23 @@
+<html>
+<head>
+    <title>
+        Driver page
+    </title>
+</head>
+<body>
+<table>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    {{range .}}
+    <tr>
+        <td>{{.Name}}</td>
+        <td>{{.DriverType}}</td>
+        <td>{{.StaffId}}</td>
+    </tr>
+    {{end}}
+</table>
+</body>
+</html>
