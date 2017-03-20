@@ -3,65 +3,82 @@ package domain
 import (
 	"time"
 	"github.com/pborman/uuid"
-	"github.com/galahade/bus_staff_managment/util"
-	"fmt"
+	"github.com/jinzhu/gorm"
 )
 
 type Bus struct {
-	Id             string
-	BusLicense     string
-	CustomId       string
-	Brand          string
-	ProductionDate time.Time
+	Domain
+	BusLicense   string
+	CustomId     string
+	RegisterDate time.Time
+	VIN          string
+	EngineNo     string
+	BrandID      string
+	BusBrand     `gorm:"ForeignKey:BrandID"`
 }
 
-func (bus Bus) InsertString() string {
-	return "INSERT INTO BUS (ID, BUS_LICENSE, CUSTOM_ID, BRAND, PRODUCTION_DATE) VALUES(?,?,?,?,?)"
-}
-func (bus Bus) QueryAllString() string {
-	return "SELECT ID, BUS_LICENSE, CUSTOM_ID, BRAND, PRODUCTION_DATE FROM BUS"
-}
-func (bus Bus) QueryByIdString() string {
-	return "SELECT ID, BUS_LICENSE, CUSTOM_ID, BRAND, PRODUCTION_DATE FROM BUS WHERE ID = ?"
+type BusBrand struct {
+	Domain
+	Name  string
+	Model string
+	Alias string
 }
 
-func (bus Bus) DeleteByIdString() string {
-	return "DELETE FROM BUS WHERE ID = ?"
+func (*Bus) BeforeCreate(scope *gorm.Scope) error {
+	scope.SetColumn("ID", uuid.New())
+	return nil
 }
 
-func (bus *Bus) Insert() {
-	tx, err := db.Begin()
-	util.CheckErr(err)
-	defer tx.Rollback()
-
-	stmtP, err := tx.Prepare(bus.InsertString())
-	util.CheckErr(err)
-	defer stmtP.Close()
-
-	res, err := stmtP.Exec(uuid.NewUUID(), bus.BusLicense, bus.CustomId, bus.Brand, bus.ProductionDate)
-	checkChangeDBFailed(res, err, "Fail to insert staff data into db.")
-
-	err = tx.Commit()
-	util.CheckErr(err)
+func (Bus) TableName() string {
+	return "bus_basic"
 }
 
-func (bus *Bus) QueryById() {
-	fmt.Printf("Bus Id %s will be query.", bus.Id)
-	stmtP, err := db.Prepare(bus.QueryByIdString())
-	util.CheckErr(err)
-	defer stmtP.Close()
-
-	err = stmtP.QueryRow(bus.Id).Scan(&bus.Id, &bus.BusLicense, &bus.CustomId, &bus.Brand, &bus.ProductionDate)
-	util.CheckErr(err)
+func (*BusBrand) BeforeCreate(scope *gorm.Scope) error {
+	scope.SetColumn("ID", uuid.New())
+	return nil
 }
 
-func (bus *Bus) DeleteById() {
-	fmt.Printf("Bus Id %s will be delete.", bus.Id)
-	stmtP, err := db.Prepare(bus.DeleteByIdString())
-	util.CheckErr(err)
-	defer stmtP.Close()
+func (busBrand *BusBrand) Create() error {
+	if !gdb.NewRecord(*busBrand) {
+		return RecordAlreadyExistError
+	}
+	tempDB := gdb.Create(busBrand)
+	if tempDB.Error != nil {
+		return tempDB.Error
+	}
+	return nil
 
-	res, err := stmtP.Exec(bus.Id)
-	checkChangeDBFailed(res, err, "")
 }
+
+func (bus *Bus) Create() error {
+	if !gdb.NewRecord(*bus) {
+		return RecordAlreadyExistError
+	}
+	tempDB := gdb.Create(bus)
+	if tempDB.Error != nil {
+		return tempDB.Error
+	}
+	return nil
+
+}
+
+func (bus *Bus) QueryByLicense() error {
+	//gdb.Where("bus_license = ?", bus.BusLicense).First(bus).Related(&bus.Brand)
+	//gdb.Preload("Brand").First(bus, "bus_license = ?", bus.BusLicense)//.Model(bus).Related(&bus.Brand)
+	gdb.First(bus, "bus_license = ?", bus.BusLicense).Model(bus).Related(&bus.BusBrand, "BrandID")
+	if err := checkQueryFirstNotNil(bus); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bus Bus) QueryAll() []Bus {
+	buses := []Bus{}
+	gdb.Find(&buses);
+	for i, _ := range buses {
+		gdb.Model(buses[i]).Related(&buses[i].BusBrand, "BrandID")
+	}
+	return buses
+}
+
 

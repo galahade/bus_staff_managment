@@ -2,25 +2,46 @@ package controller
 
 import (
 	"net/http"
-	"fmt"
-	"log"
-	"html/template"
-	"github.com/galahade/bus_staff_managment/util"
 	"github.com/galahade/bus_staff_managment/service"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
-func ListDriver(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method)
-	r.ParseForm()
-	if r.Method == "GET" {
-		t, err := template.ParseFiles("template/driver.tmpl")
-		util.CheckErr(err)
-		staffs :=  service.GetAllDrivers()
-		w.Header().Set("Content-Type", "text/html")
-		log.Println(t.Execute(w, staffs))
-
-	} else {
-		http.Redirect(w, r, "/", 302)
+func ShowDrivers(c *gin.Context) {
+	setCORSHeader(c)
+	switch c.Query("driverType") {
+	case "qualified":
+		c.JSON(http.StatusOK, wrapperStaff(service.GetAllQualifiedDrivers()))
+	case "internship":
+		c.JSON(http.StatusOK, wrapperStaff(service.GetAllInternshipDrivers()))
+	default:
+		c.JSON(http.StatusOK, wrapperStaff(service.GetAllDrivers()))
 	}
 }
+
+func GetDriverByStaffID (c *gin.Context) {
+	setCORSHeader(c)
+	sid := c.Param("sid")
+
+	staffModel, ok := service.GetDriverBySID(sid)
+	var staffModels []service.StaffModel
+	if ok {
+
+		staffModels = append(staffModels, staffModel)
+		c.JSON(http.StatusOK, wrapperStaff(staffModels))
+	} else {
+		c.JSON(http.StatusNotFound,wrapperStaff(staffModels))
+	}
+
+
+}
+
+func wrapperStaff(staffs []service.StaffModel) RESTWrapper {
+	wrapper := NewWrapper();
+	wrapper.setSelf("api.bus.com/drivers")
+	wrapper.setData("drivers", staffs)
+	return *wrapper
+}
+
+
+
 

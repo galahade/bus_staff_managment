@@ -4,22 +4,34 @@ import (
 	"database/sql"
 	_"github.com/go-sql-driver/mysql"
 	."github.com/galahade/bus_staff_managment/util"
+	"github.com/jinzhu/gorm"
+	"time"
+	"errors"
 )
 
+var RecordAlreadyExistError error  = errors.New("domain: create new record failed, this record already exist.")
+var RecordNotFoundError error  = errors.New("domain: record not found in DB.")
 
-var db *sql.DB
-var err error
 
-type Domain interface {
-	InsertString() string
-	QueryAllString() string
-	QueryByIdString() string
-	DeleteByIdString() string
+var (
+	db *sql.DB
+	err error
+	gdb *gorm.DB
+)
+
+type Domain struct {
+	ID        string     `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
 }
 
 func init()  {
 	db, err = sql.Open(DriverName, DSN)
 	CheckErr(err)
+	//gorm
+	gdb, err = gorm.Open(DriverName, DSN)
+	gdb.SingularTable(true)
 }
 
 
@@ -28,4 +40,11 @@ func checkChangeDBFailed(result sql.Result, err error, errMessage string)  {
 	if affected, _ := result.RowsAffected(); affected == 0 {
 		panic(errMessage)
 	}
+}
+
+func checkQueryFirstNotNil(domain interface{}) (err error) {
+	if gdb.NewRecord(domain) {
+		return RecordNotFoundError
+	}
+	return nil
 }

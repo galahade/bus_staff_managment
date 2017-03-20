@@ -4,18 +4,19 @@ import (
 	"time"
 	"github.com/pborman/uuid"
 	"github.com/galahade/bus_staff_managment/util"
-	"fmt"
+
 	"database/sql/driver"
 	"strings"
 	"errors"
 	"database/sql"
+	"fmt"
 )
 
 type PhoneNumbers []string
 type JobType byte
 
 type Staff struct {
-	Id                       string
+	Domain
 	Name                     string
 	StaffId                  string
 	JobType                  JobType
@@ -42,10 +43,15 @@ func (staff Staff) QueryAllString() string {
 		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
 		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM STAFF"
 }
-func (staff Staff) QueryByIdString() string {
+func (staff Staff) QueryByIDString() string {
 	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
 		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
 		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM STAFF WHERE ID = ?"
+}
+func (staff Staff) QueryByStaffIDString() string {
+	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
+		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
+		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM STAFF WHERE STAFF_ID = ?"
 }
 func (staff Staff)  QueryByJobTypeString() string {
 	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
@@ -80,8 +86,12 @@ func (phoneNumbers *PhoneNumbers) Scan(value interface{}) error {
 		return nil
 	}
 	if phones, err := driver.String.ConvertValue(value); err == nil {
-		if v, ok := phones.(string); ok  {
+		if v, ok := phones.(string); ok {
 			results := strings.Split(v, ",")
+			*phoneNumbers = results
+		} else if v, ok := phones.([]byte); ok {
+			temp := string(v)
+			results := strings.Split(temp, ",")
 			*phoneNumbers = results
 		}
 		return nil
@@ -115,15 +125,30 @@ func (staff *Staff) Insert() {
 	}
 }
 
-func (staff *Staff) QueryById() {
-	stmtP, err := db.Prepare(staff.QueryByIdString())
+func (staff *Staff) QueryByID() {
+	stmtP, err := db.Prepare(staff.QueryByIDString())
 	util.CheckErr(err)
 
-	err = stmtP.QueryRow(staff.Id).Scan(&staff.Id, &staff.Name, &staff.StaffId, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
+	err = stmtP.QueryRow(staff.ID).Scan(&staff.ID, &staff.Name, &staff.StaffId, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
 		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
 		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
 	util.CheckErr(err)
 
+}
+
+func (staff *Staff) QueryByStaffID() error {
+	stmtP, err := db.Prepare(staff.QueryByStaffIDString())
+	util.CheckErr(err)
+
+	err = stmtP.QueryRow(staff.StaffId).Scan(&staff.ID, &staff.Name, &staff.StaffId, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
+		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
+		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
+	if(err == sql.ErrNoRows) {
+		return err
+	} else {
+		util.CheckErr(err)
+	}
+	return nil
 }
 
 func (staff *Staff) QueryAll() []Staff {
@@ -146,15 +171,17 @@ func (staff *Staff) DeleteById() {
 	stmtP, err := db.Prepare(staff.DeleteByIdString())
 	util.CheckErr(err)
 
-	res, err := stmtP.Exec(staff.Id)
+	res, err := stmtP.Exec(staff.ID)
 	checkChangeDBFailed(res, err, "")
 }
 
 func (staff Staff) String() string {
-	return fmt.Sprintf("Staff data are : \n id : %s,\n name : %s,\n staffId : %s,\n jobType : %d,\n onboardTime : %s,\n PersonalId : %s,\n DriverType : %s,\n IsInternship : %t,\n " +
-		"isMultiTimeHired : %t,\n firstOnboardTime : %s,\n phone : %s,\n department : %s,\n emergencyContact : %s,\n emergencyContactPhone : %s,\n " +
-		"emergencyContactRelation : %s,\n", staff.Id, staff.Name, staff.StaffId, staff.JobType, staff.OnboardTime, staff.PersonalID, staff.DriverType, staff.IsInternship,
-		staff.IsMultiTimeHired, staff.FirstOnboardTime, staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone, staff.EmergencyContactRelation)
+	return fmt.Sprintf("Staff data are : \n id : %s,\n name : %s,\n staffId : %s,\n jobType : %d,\n onboardTime : %s,\n PersonalId : %s,\n " +
+		"DriverType : %s,\n IsInternship : %t,\n isMultiTimeHired : %t,\n firstOnboardTime : %s,\n phone : %s,\n department : %s,\n " +
+		"emergencyContact : %s,\n emergencyContactPhone : %s,\n emergencyContactRelation : %s,\n",
+		staff.ID, staff.Name, staff.StaffId, staff.JobType, staff.OnboardTime, staff.PersonalID, staff.DriverType, staff.IsInternship,
+		staff.IsMultiTimeHired, staff.FirstOnboardTime, staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone,
+		staff.EmergencyContactRelation)
 }
 
 func (staff Staff) IsQualified() (result bool) {
@@ -170,7 +197,7 @@ func (staff Staff) IsQualified() (result bool) {
 
 func (staff Staff) NeedUpgrade() (result bool) {
 	result = false
-	if !staff.IsQualified() && !staff.IsInternship && staff.Department == "运营"{
+	if !staff.IsQualified() && !staff.IsInternship && staff.Department == "运营" {
 		result = true
 	}
 	return
@@ -182,7 +209,7 @@ func scanQueryResult(rows *sql.Rows) []Staff {
 	for rows.Next() {
 		staffP := new(Staff)
 
-		err = rows.Scan(&staffP.Id, &staffP.Name, &staffP.StaffId, &staffP.JobType, &staffP.OnboardTime, &staffP.PersonalID,
+		err = rows.Scan(&staffP.ID, &staffP.Name, &staffP.StaffId, &staffP.JobType, &staffP.OnboardTime, &staffP.PersonalID,
 			&staffP.DriverType, &staffP.IsInternship, &staffP.IsMultiTimeHired, &staffP.FirstOnboardTime,
 			&staffP.Phone, &staffP.Department, &staffP.EmergencyContact, &staffP.EmergencyContactPhone, &staffP.EmergencyContactRelation)
 		util.CheckErr(err)

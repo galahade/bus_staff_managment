@@ -1,16 +1,10 @@
 package main
 
 import (
-	"net/http"
-	"io"
 	"log"
-	"fmt"
-	"html/template"
-	"time"
-	"crypto/md5"
-	"strconv"
 	"github.com/galahade/bus_staff_managment/session"
 	. "github.com/galahade/bus_staff_managment/controller"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
 var globalSessions *session.Manager
@@ -23,44 +17,13 @@ func init() {
 
 func main() {
 
-	mux := http.NewServeMux()
+	router := gin.Default()
+	router.GET("/drivers", ShowDrivers)
+	router.GET("/drivers/:sid", GetDriverByStaffID)
+	router.OPTIONS("/buses", HandleOptionsRequest)
+	router.GET("/buses", ShowAllBuses)
+	router.POST("/buses",AddBus)
 
-	//mux.Handle("/bus", http.HandlerFunc(handler))
-	//mux.Handle("/", http.HandlerFunc(HelloServer))
-	mux.HandleFunc("/bus", handler)
-	mux.HandleFunc("/", HelloServer)
-	mux.HandleFunc("/login", login)
-	mux.HandleFunc("/drivers", ListDriver)
-
-	log.Fatal(http.ListenAndServe(":8000", mux))
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "BUS station")
-}
-
-func HelloServer(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "hello, world!\n")
-}
-
-func login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method)
-	sess := globalSessions.SessionStart(w,r)
-	r.ParseForm()
-	if r.Method == "GET" {
-		crutime := time.Now().Unix()
-		h := md5.New()
-		io.WriteString(h, strconv.FormatInt(crutime, 10))
-		token := fmt.Sprintf("%x", h.Sum(nil))
-
-		t, _ := template.ParseFiles("login.gtpl")
-		w.Header().Set("Content-Type", "text/html")
-		sess.Get("username")
-		log.Println(t.Execute(w, token))
-
-	} else {
-		sess.Set("username", r.Form["username"])
-		http.Redirect(w, r, "/", 302)
-	}
+	log.Fatal(router.Run(":8000"))
 }
 
