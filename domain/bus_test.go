@@ -16,24 +16,19 @@ func TestBusBrand_Create(t *testing.T) {
 }
 
 func TestBus_Create(t *testing.T) {
-	/*
-	busBrand := BusBrand{
-		//Domain.ID:"239e7938-9f76-49f9-a290-3cbacc52ab62",
-		Name:"长安",
-		Model:"SC6833BEV",
-	}
-	*/
+	gdb.Debug()
+	gdb.LogMode(true)
 	bus1 := Bus{
-		BusLicense:"233D8",
-		CustomId:"338",
-	//	Brand: busBrand,
+		BusLicense:"12341",
+		CustomId:"123123",
+		BrandID: "1c4f1929-298d-4301-b4c8-130fbb3208a6",
 		RegisterDate:time.Now(),
-		VIN:"testVIN",
-		EngineNo:"testEngineNo",
+		VehicleIDNumber: "testVIN",
+		EngineNo: "testEngineNo",
 	}
 	(&bus1).Create()
 
-	bus2 := Bus{BusLicense:"322D8"}
+	bus2 := Bus{BusLicense:"12341"}
 	(&bus2).QueryByLicense();
 	assert.NotEmpty(t, bus2.ID)
 	assert.NotEmpty(t, bus2.CreatedAt)
@@ -66,6 +61,9 @@ func TestBus_QueryAll(t *testing.T) {
 	for _, bus := range buses {
 		assert.NotEmpty(t, bus.ID)
 		assert.NotEmpty(t, bus.BusBrand.ID)
+		assert.NotEmpty(t, bus.BusBrand.Name)
+		assert.NotEmpty(t, bus.BusBrand.Model)
+		assert.NotEmpty(t, bus.BusBrand.CreatedAt)
 	}
 }
 

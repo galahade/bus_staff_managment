@@ -8,13 +8,14 @@ import (
 
 type Bus struct {
 	Domain
-	BusLicense   string
-	CustomId     string
-	RegisterDate time.Time
-	VIN          string
-	EngineNo     string
-	BrandID      string
-	BusBrand     `gorm:"ForeignKey:BrandID"`
+	BusLicense      string
+	CustomId        string
+	RegisterDate    time.Time
+	VehicleIDNumber string      `gorm:"column:VIN"`
+	EngineNo        string
+	PersonsCapacity int
+	BrandID         string
+	BusBrand        BusBrand      `gorm:"save_associations:false"`
 }
 
 type BusBrand struct {
@@ -79,6 +80,12 @@ func (bus Bus) QueryAll() []Bus {
 		gdb.Model(buses[i]).Related(&buses[i].BusBrand, "BrandID")
 	}
 	return buses
+}
+
+func (busBrand BusBrand) QueryAll() []BusBrand {
+	busBrands := []BusBrand{}
+	gdb.Find(&busBrands);
+	return busBrands
 }
 
 

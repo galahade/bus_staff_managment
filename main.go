@@ -23,6 +23,7 @@ func main() {
 	router.OPTIONS("/buses", HandleOptionsRequest)
 	router.GET("/buses", ShowAllBuses)
 	router.POST("/buses",AddBus)
+	router.GET("/brands",ShowAllBusBrands)
 
 	log.Fatal(router.Run(":8000"))
 }

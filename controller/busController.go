@@ -4,6 +4,7 @@ import (
 	. "github.com/galahade/bus_staff_managment/service"
 	"net/http"
 	"gopkg.in/gin-gonic/gin.v1"
+	"log"
 )
 
 func ShowAllBuses (c *gin.Context) {
@@ -14,7 +15,7 @@ func ShowAllBuses (c *gin.Context) {
 func AddBus(c *gin.Context) {
 	busModel, err := fillBusModelByRequest(c)
 	setCORSHeader(c);
-
+	log.Printf("busModel is : %s", busModel)
 	if err != nil {
 		BadRequestResponse(c, err)
 		return
