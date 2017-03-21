@@ -16,8 +16,8 @@ func TestBusBrand_Create(t *testing.T) {
 }
 
 func TestBus_Create(t *testing.T) {
-	gdb.Debug()
-	gdb.LogMode(true)
+	Gdb.Debug()
+	Gdb.LogMode(true)
 	bus1 := Bus{
 		BusLicense:"12341",
 		CustomId:"123123",
@@ -34,14 +34,14 @@ func TestBus_Create(t *testing.T) {
 	assert.NotEmpty(t, bus2.CreatedAt)
 	assert.NotEmpty(t, bus2.CustomId)
 
-	gdb.Unscoped().Delete(&bus2)
+	Gdb.Unscoped().Delete(&bus2)
 
 
 }
 
 func TestBus_QueryByLicense(t *testing.T) {
-	gdb.Debug()
-	gdb.LogMode(true)
+	Gdb.Debug()
+	Gdb.LogMode(true)
 	bus := &Bus{BusLicense:"322D8"}
 
 	bus.QueryByLicense()
@@ -55,7 +55,7 @@ func TestBus_QueryByLicense(t *testing.T) {
 }
 
 func TestBus_QueryAll(t *testing.T) {
-	gdb.LogMode(true)
+	Gdb.LogMode(true)
 	bus := Bus{}
 	buses := bus.QueryAll()
 	for _, bus := range buses {

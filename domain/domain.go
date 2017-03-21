@@ -16,7 +16,7 @@ var RecordNotFoundError error  = errors.New("domain: record not found in DB.")
 var (
 	db *sql.DB
 	err error
-	gdb *gorm.DB
+	Gdb *gorm.DB
 )
 
 type Domain struct {
@@ -30,8 +30,8 @@ func init()  {
 	db, err = sql.Open(DriverName, DSN)
 	CheckErr(err)
 	//gorm
-	gdb, err = gorm.Open(DriverName, DSN)
-	gdb.SingularTable(true)
+	Gdb, err = gorm.Open(DriverName, DSN)
+	Gdb.SingularTable(true)
 }
 
 
@@ -43,7 +43,7 @@ func checkChangeDBFailed(result sql.Result, err error, errMessage string)  {
 }
 
 func checkQueryFirstNotNil(domain interface{}) (err error) {
-	if gdb.NewRecord(domain) {
+	if Gdb.NewRecord(domain) {
 		return RecordNotFoundError
 	}
 	return nil

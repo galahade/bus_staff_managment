@@ -54,8 +54,8 @@ func HandleOptionsRequest(c *gin.Context)  {
 	c.Header("Access-Control-Allow-Credentials", "true")
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Headers", "Content-Type")
-	c.Header("Access-Control-Allow-Methods", "POST")
-	c.String(http.StatusOK,"")
+	c.Header("Access-Control-Allow-Methods", "POST,PUT,DELETE")
+	c.String(http.StatusOK, "")
 }
 
 func BadRequestResponse(c *gin.Context, err error) {

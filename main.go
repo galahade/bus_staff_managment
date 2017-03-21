@@ -18,11 +18,19 @@ func init() {
 func main() {
 
 	router := gin.Default()
+
 	router.GET("/drivers", ShowDrivers)
 	router.GET("/drivers/:sid", GetDriverByStaffID)
+
 	router.OPTIONS("/buses", HandleOptionsRequest)
+	router.OPTIONS("/buses/:license", HandleOptionsRequest)
+
 	router.GET("/buses", ShowAllBuses)
+	router.GET("/buses/:license", GetBusByLicense)
 	router.POST("/buses",AddBus)
+	router.PUT("/buses/:license",PutBus)
+
+
 	router.GET("/brands",ShowAllBusBrands)
 
 	log.Fatal(router.Run(":8000"))

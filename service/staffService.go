@@ -7,7 +7,7 @@ import (
 
 var defaultStaff = Staff{}
 
-func GetDriverBySID(sid string) (StaffModel, bool) {
+func FetchDriverBySID(sid string) (StaffModel, bool) {
 	log.Printf("query for staff ID : %s", sid)
 	staff := new(Staff)
 	staff.StaffId = sid

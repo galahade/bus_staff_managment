@@ -40,10 +40,10 @@ func (*BusBrand) BeforeCreate(scope *gorm.Scope) error {
 }
 
 func (busBrand *BusBrand) Create() error {
-	if !gdb.NewRecord(*busBrand) {
+	if !Gdb.NewRecord(*busBrand) {
 		return RecordAlreadyExistError
 	}
-	tempDB := gdb.Create(busBrand)
+	tempDB := Gdb.Create(busBrand)
 	if tempDB.Error != nil {
 		return tempDB.Error
 	}
@@ -52,10 +52,19 @@ func (busBrand *BusBrand) Create() error {
 }
 
 func (bus *Bus) Create() error {
-	if !gdb.NewRecord(*bus) {
+	if !Gdb.NewRecord(*bus) {
 		return RecordAlreadyExistError
 	}
-	tempDB := gdb.Create(bus)
+	tempDB := Gdb.Create(bus)
+	if tempDB.Error != nil {
+		return tempDB.Error
+	}
+	return nil
+
+}
+
+func (bus *Bus) Update() error {
+	tempDB := Gdb.Save(bus)
 	if tempDB.Error != nil {
 		return tempDB.Error
 	}
@@ -66,7 +75,7 @@ func (bus *Bus) Create() error {
 func (bus *Bus) QueryByLicense() error {
 	//gdb.Where("bus_license = ?", bus.BusLicense).First(bus).Related(&bus.Brand)
 	//gdb.Preload("Brand").First(bus, "bus_license = ?", bus.BusLicense)//.Model(bus).Related(&bus.Brand)
-	gdb.First(bus, "bus_license = ?", bus.BusLicense).Model(bus).Related(&bus.BusBrand, "BrandID")
+	Gdb.First(bus, "bus_license = ?", bus.BusLicense).Model(bus).Related(&bus.BusBrand, "BrandID")
 	if err := checkQueryFirstNotNil(bus); err != nil {
 		return err
 	}
@@ -75,16 +84,16 @@ func (bus *Bus) QueryByLicense() error {
 
 func (bus Bus) QueryAll() []Bus {
 	buses := []Bus{}
-	gdb.Find(&buses);
+	Gdb.Find(&buses);
 	for i, _ := range buses {
-		gdb.Model(buses[i]).Related(&buses[i].BusBrand, "BrandID")
+		Gdb.Model(buses[i]).Related(&buses[i].BusBrand, "BrandID")
 	}
 	return buses
 }
 
 func (busBrand BusBrand) QueryAll() []BusBrand {
 	busBrands := []BusBrand{}
-	gdb.Find(&busBrands);
+	Gdb.Find(&busBrands);
 	return busBrands
 }
 

@@ -22,7 +22,7 @@ func GetDriverByStaffID (c *gin.Context) {
 	setCORSHeader(c)
 	sid := c.Param("sid")
 
-	staffModel, ok := service.GetDriverBySID(sid)
+	staffModel, ok := service.FetchDriverBySID(sid)
 	var staffModels []service.StaffModel
 	if ok {
 
@@ -31,8 +31,6 @@ func GetDriverByStaffID (c *gin.Context) {
 	} else {
 		c.JSON(http.StatusNotFound,wrapperStaff(staffModels))
 	}
-
-
 }
 
 func wrapperStaff(staffs []service.StaffModel) RESTWrapper {

@@ -3,7 +3,6 @@ package service
 import (
 	. "github.com/galahade/bus_staff_managment/domain"
 	"time"
-	"log"
 )
 
 type BusModel struct {
@@ -30,10 +29,18 @@ var defaultBusBrand = BusBrand{}
 
 func CreateNewBus(busModel *BusModel) error {
 	bus, err := busModel.toDomain()
-	log.Printf("bus is : %#v", bus)
-
 	err = bus.Create()
 	busModel.ID = bus.BusLicense
+	return err
+}
+
+func ChangeBus(busModel *BusModel) error {
+	bus, err := busModel.toDomain()
+	busOriginal := &Bus{ BusLicense: bus.BusLicense}
+	busOriginal.QueryByLicense()
+	bus.ID = busOriginal.ID
+	bus.CreatedAt = busOriginal.CreatedAt
+	err = bus.Update()
 	return err
 }
 
@@ -43,6 +50,19 @@ func GetAllBuses() ([]BusModel) {
 
 func GetAllBusBrands() ([]BusBrandModel) {
 	return fetchFromBusBrandDomains(defaultBusBrand.QueryAll())
+}
+
+func FetchBusByLicense(license string) (BusModel, bool) {
+	bus := new(Bus)
+	bus.BusLicense = license
+	err := bus.QueryByLicense()
+	if err == nil {
+		busModel := new(BusModel)
+		busModel.fillFromDomain(*bus)
+		return  *busModel, true
+	} else {
+		return *new(BusModel), false
+	}
 }
 
 func fetchFromBusBrandDomains(busBrands []BusBrand) (busBrandModels []BusBrandModel) {
@@ -77,6 +97,9 @@ func (busModel *BusModel) fillFromDomain(bus Bus) {
 	busModel.BrandAlias = bus.BusBrand.Alias
 	busModel.CustomID = bus.CustomId
 	busModel.RegisterDate = bus.RegisterDate.Format(DateString)
+	busModel.VehicleIDNumber = bus.VehicleIDNumber
+	busModel.EngineNo = bus.EngineNo
+	busModel.PersonsCapacity = bus.PersonsCapacity
 }
 
 func (busModel BusModel) toDomain() (bus *Bus, err error) {
