@@ -1,6 +1,25 @@
 create database bus_system;
 use bus_system;
 
+DROP TABLE IF EXISTS `charge_record`;
+
+#Create table charge_record
+CREATE TABLE `charge_record` (
+  `id` char(36) NOT NULL DEFAULT '',
+  `bus_id` char(36) NOT NULL DEFAULT '',
+  `record_date` date NOT NULL,
+  `record_staff_id` char(36) NOT NULL DEFAULT '',
+  `mileage` int(11) DEFAULT NULL,
+  `charged_TWH` decimal(10,0) DEFAULT NULL,
+  `remain_percent` decimal(10,0) DEFAULT NULL,
+  `final_percent` decimal(10,0) DEFAULT '100',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
 #Create table bus_basic
 DROP TABLE IF EXISTS `bus_basic`;
 CREATE TABLE `bus_basic` (
