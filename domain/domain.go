@@ -3,15 +3,14 @@ package domain
 import (
 	"database/sql"
 	_"github.com/go-sql-driver/mysql"
-	."github.com/galahade/bus_staff_managment/util"
+	. "github.com/galahade/bus_staff_managment/util"
 	"github.com/jinzhu/gorm"
 	"time"
 	"errors"
 )
 
-var RecordAlreadyExistError error  = errors.New("domain: create new record failed, this record already exist.")
-var RecordNotFoundError error  = errors.New("domain: record not found in DB.")
-
+var RecordAlreadyExistError error = errors.New("domain: create new record failed, this record already exist.")
+var RecordNotFoundError error = errors.New("domain: record not found in DB.")
 
 var (
 	db *sql.DB
@@ -26,7 +25,7 @@ type Domain struct {
 	DeletedAt *time.Time `sql:"index"`
 }
 
-func init()  {
+func init() {
 	db, err = sql.Open(DriverName, DSN)
 	CheckErr(err)
 	//gorm
@@ -34,8 +33,7 @@ func init()  {
 	Gdb.SingularTable(true)
 }
 
-
-func checkChangeDBFailed(result sql.Result, err error, errMessage string)  {
+func checkChangeDBFailed(result sql.Result, err error, errMessage string) {
 	CheckErr(err)
 	if affected, _ := result.RowsAffected(); affected == 0 {
 		panic(errMessage)
@@ -47,4 +45,16 @@ func checkQueryFirstNotNil(domain interface{}) (err error) {
 		return RecordNotFoundError
 	}
 	return nil
+}
+
+func insertDomain(domain interface{}) error {
+	if !Gdb.NewRecord(domain) {
+		return RecordAlreadyExistError
+	}
+	tempDB := Gdb.Create(domain)
+	if tempDB.Error != nil {
+		return tempDB.Error
+	}
+	return nil
+
 }

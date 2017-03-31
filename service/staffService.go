@@ -10,11 +10,11 @@ var defaultStaff = Staff{}
 func FetchDriverBySID(sid string) (StaffModel, bool) {
 	log.Printf("query for staff ID : %s", sid)
 	staff := new(Staff)
-	staff.StaffId = sid
+	staff.StaffIdentity = sid
 	err := staff.QueryByStaffID()
 	if err == nil {
 		staffModel := new(StaffModel)
-		staffModel.fetchFromDomain(*staff)
+		staffModel.fillFromDomain(*staff)
 		return  *staffModel, true
 	} else {
 		return *new(StaffModel), false
@@ -26,7 +26,7 @@ func GetAllDrivers() []StaffModel {
 	var staffModels []StaffModel
 	for _, staff := range staffs {
 		staffModel := new(StaffModel)
-		staffModel.fetchFromDomain(staff)
+		staffModel.fillFromDomain(staff)
 		staffModels = append(staffModels, *staffModel)
 	}
 	return staffModels
@@ -38,7 +38,7 @@ func GetAllQualifiedDrivers() []StaffModel {
 	for _, staff := range staffs {
 		if staff.IsQualified() {
 			staffModel := new(StaffModel)
-			staffModel.fetchFromDomain(staff)
+			staffModel.fillFromDomain(staff)
 			staffModels = append(staffModels, *staffModel)
 		}
 	}
@@ -51,7 +51,7 @@ func GetAllInternshipDrivers() [] StaffModel {
 	for _, staff := range staffs {
 		if staff.IsInternship {
 			staffModel := new(StaffModel)
-			staffModel.fetchFromDomain(staff)
+			staffModel.fillFromDomain(staff)
 			staffModels = append(staffModels, *staffModel)
 		}
 	}
@@ -59,9 +59,9 @@ func GetAllInternshipDrivers() [] StaffModel {
 }
 
 type StaffModel struct {
-	Id                       string       `json:"-"`
+	ID                       string       `json:"id"`
 	Name                     string       `json:"name"`
-	StaffId                  string       `json:"id"`
+	StaffID                  string       `json:"sid"`
 	JobType                  string       `json:"jobType"`
 	OnboardTime              string       `json:"onboardTime"`
 	PersonalID               string       `json:"personalID"`
@@ -76,49 +76,22 @@ type StaffModel struct {
 	EmergencyContactRelation string       `json:"emergencyContactRelation"`
 }
 
-func (staffModel *StaffModel) fetchFromDomain(staff Staff) {
-	staffModel.Id = staff.ID
+func (staffModel *StaffModel) fillFromDomain(staff Staff) {
+	staffModel.ID = staff.ID
 	staffModel.Name = staff.Name
-	staffModel.StaffId = staff.StaffId
-	staffModel.JobType = getJobTypeFromByte(byte(staff.JobType))
-	staffModel.OnboardTime = staff.OnboardTime.Format("2006-01-02")
+	staffModel.StaffID = staff.StaffIdentity
+	staffModel.JobType = staff.GetJobTypeName()
+	staffModel.OnboardTime = staff.OnboardTime.Format(DateString)
 	staffModel.PersonalID = staff.PersonalID
 	staffModel.DriverType = staff.DriverType
 	staffModel.IsInternship = staff.IsInternship
 	staffModel.IsMultiTimeHired = staff.IsMultiTimeHired
-	staffModel.FirstOnboardTime = staff.FirstOnboardTime.Format("2006-01-02")
-	staffModel.Phone = getPhone(staff.Phone)
+	staffModel.FirstOnboardTime = staff.FirstOnboardTime.Format(DateString)
+	staffModel.Phone = staff.GetPhoneString()
 	staffModel.Department = staff.Department
 	staffModel.EmergencyContact = staff.EmergencyContact
 	staffModel.EmergencyContactRelation = staff.EmergencyContactRelation
-	staffModel.EmergencyContactPhone = getPhone(staff.EmergencyContactPhone)
+	staffModel.EmergencyContactPhone = staff.GetECPhoneString()
 }
 
-func getPhone(phones PhoneNumbers) (sPhone string) {
-	for _, phone := range phones {
-		if sPhone == "" {
-			sPhone = phone
-		} else {
-			sPhone = sPhone + "," + phone
-		}
-	}
-	return
-}
 
-func getJobTypeFromByte(b byte) (jobtype string) {
-	switch b {
-	case byte(1):
-		jobtype = "司机"
-	case byte(2):
-		jobtype = "维修"
-	case byte(4):
-		jobtype = "技术"
-	case byte(8):
-		jobtype = "保障"
-	case byte(128):
-		jobtype = "管理"
-	default:
-		jobtype = "未知"
-	}
-	return
-}

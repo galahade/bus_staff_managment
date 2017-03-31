@@ -70,7 +70,7 @@ func ImportStaff() {
 						case 10:
 							staff.Department = strings.TrimSpace(text)
 						case 11:
-							staff.StaffId = strings.TrimSpace(text)
+							staff.StaffIdentity = strings.TrimSpace(text)
 						}
 					}
 				}
@@ -140,7 +140,7 @@ func ImportDriver() {
 						case 10:
 							staff.Department = strings.TrimSpace(text)
 						case 11:
-							staff.StaffId = strings.TrimSpace(text)
+							staff.StaffIdentity = strings.TrimSpace(text)
 						}
 					}
 				}

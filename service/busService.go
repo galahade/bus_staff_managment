@@ -27,16 +27,16 @@ type BusBrandModel struct {
 var defaultBus = Bus{}
 var defaultBusBrand = BusBrand{}
 
-func CreateNewBus(busModel *BusModel) error {
+func CreateBus(busModel *BusModel) error {
 	bus, err := busModel.toDomain()
 	err = bus.Create()
-	busModel.ID = bus.BusLicense
+	busModel.ID = bus.ID
 	return err
 }
 
 func ChangeBus(busModel *BusModel) error {
 	bus, err := busModel.toDomain()
-	busOriginal := &Bus{ BusLicense: bus.BusLicense}
+	busOriginal := &Bus{BusLicense: bus.BusLicense}
 	busOriginal.QueryByLicense()
 	bus.ID = busOriginal.ID
 	bus.CreatedAt = busOriginal.CreatedAt
@@ -59,7 +59,7 @@ func FetchBusByLicense(license string) (BusModel, bool) {
 	if err == nil {
 		busModel := new(BusModel)
 		busModel.fillFromDomain(*bus)
-		return  *busModel, true
+		return *busModel, true
 	} else {
 		return *new(BusModel), false
 	}
@@ -91,7 +91,7 @@ func (busBrandModel *BusBrandModel) fillFromDomain(busBrand BusBrand) {
 }
 
 func (busModel *BusModel) fillFromDomain(bus Bus) {
-	busModel.ID = bus.BusLicense
+	busModel.ID = bus.ID
 	busModel.License = bus.BusLicense
 	busModel.BrandID = bus.BrandID
 	busModel.BrandAlias = bus.BusBrand.Alias

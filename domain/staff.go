@@ -18,7 +18,7 @@ type JobType byte
 type Staff struct {
 	Domain
 	Name                     string
-	StaffId                  string
+	StaffIdentity            string       `gorm:"column:staff_id"`
 	JobType                  JobType
 	OnboardTime              time.Time
 	PersonalID               string
@@ -32,6 +32,48 @@ type Staff struct {
 	EmergencyContactPhone    PhoneNumbers
 	EmergencyContactRelation string
 }
+
+func (staff *Staff) GetJobTypeName() (jobType string) {
+	temp := byte(staff.JobType)
+	switch temp {
+	case byte(1):
+		jobType = "司机"
+	case byte(2):
+		jobType = "维修"
+	case byte(4):
+		jobType = "技术"
+	case byte(8):
+		jobType = "保障"
+	case byte(128):
+		jobType = "管理"
+	default:
+		jobType = "未知"
+	}
+	return
+}
+
+func (staff *Staff) GetPhoneString() (sPhone string) {
+	for _, phone := range staff.Phone {
+		if sPhone == "" {
+			sPhone = phone
+		} else {
+			sPhone = sPhone + "," + phone
+		}
+	}
+	return
+}
+
+func (staff *Staff) GetECPhoneString() (sPhone string) {
+	for _, phone := range staff.EmergencyContactPhone {
+		if sPhone == "" {
+			sPhone = phone
+		} else {
+			sPhone = sPhone + "," + phone
+		}
+	}
+	return
+}
+
 
 func (staff Staff) InsertString() string {
 	return "INSERT staff SET ID=?, NAME=?, STAFF_ID=?, JOB_TYPE=?, ONBOARD_TIME=?, PERSONAL_ID=?, DRIVER_TYPE=?, " +
@@ -115,7 +157,7 @@ func (staff *Staff) Insert() {
 	stmtP, err := db.Prepare(staff.InsertString())
 	util.CheckErr(err)
 
-	res, err := stmtP.Exec(uuid.NewUUID(), staff.Name, staff.StaffId, staff.JobType, staff.OnboardTime,
+	res, err := stmtP.Exec(uuid.NewUUID(), staff.Name, staff.StaffIdentity, staff.JobType, staff.OnboardTime,
 		staff.PersonalID, staff.DriverType, staff.IsInternship, staff.IsMultiTimeHired, staff.FirstOnboardTime,
 		staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone, staff.EmergencyContactRelation)
 	util.CheckErr(err)
@@ -129,7 +171,7 @@ func (staff *Staff) QueryByID() {
 	stmtP, err := db.Prepare(staff.QueryByIDString())
 	util.CheckErr(err)
 
-	err = stmtP.QueryRow(staff.ID).Scan(&staff.ID, &staff.Name, &staff.StaffId, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
+	err = stmtP.QueryRow(staff.ID).Scan(&staff.ID, &staff.Name, &staff.StaffIdentity, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
 		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
 		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
 	util.CheckErr(err)
@@ -140,7 +182,7 @@ func (staff *Staff) QueryByStaffID() error {
 	stmtP, err := db.Prepare(staff.QueryByStaffIDString())
 	util.CheckErr(err)
 
-	err = stmtP.QueryRow(staff.StaffId).Scan(&staff.ID, &staff.Name, &staff.StaffId, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
+	err = stmtP.QueryRow(staff.StaffIdentity).Scan(&staff.ID, &staff.Name, &staff.StaffIdentity, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
 		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
 		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
 	if(err == sql.ErrNoRows) {
@@ -179,7 +221,7 @@ func (staff Staff) String() string {
 	return fmt.Sprintf("Staff data are : \n id : %s,\n name : %s,\n staffId : %s,\n jobType : %d,\n onboardTime : %s,\n PersonalId : %s,\n " +
 		"DriverType : %s,\n IsInternship : %t,\n isMultiTimeHired : %t,\n firstOnboardTime : %s,\n phone : %s,\n department : %s,\n " +
 		"emergencyContact : %s,\n emergencyContactPhone : %s,\n emergencyContactRelation : %s,\n",
-		staff.ID, staff.Name, staff.StaffId, staff.JobType, staff.OnboardTime, staff.PersonalID, staff.DriverType, staff.IsInternship,
+		staff.ID, staff.Name, staff.StaffIdentity, staff.JobType, staff.OnboardTime, staff.PersonalID, staff.DriverType, staff.IsInternship,
 		staff.IsMultiTimeHired, staff.FirstOnboardTime, staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone,
 		staff.EmergencyContactRelation)
 }
@@ -209,7 +251,7 @@ func scanQueryResult(rows *sql.Rows) []Staff {
 	for rows.Next() {
 		staffP := new(Staff)
 
-		err = rows.Scan(&staffP.ID, &staffP.Name, &staffP.StaffId, &staffP.JobType, &staffP.OnboardTime, &staffP.PersonalID,
+		err = rows.Scan(&staffP.ID, &staffP.Name, &staffP.StaffIdentity, &staffP.JobType, &staffP.OnboardTime, &staffP.PersonalID,
 			&staffP.DriverType, &staffP.IsInternship, &staffP.IsMultiTimeHired, &staffP.FirstOnboardTime,
 			&staffP.Phone, &staffP.Department, &staffP.EmergencyContact, &staffP.EmergencyContactPhone, &staffP.EmergencyContactRelation)
 		util.CheckErr(err)

@@ -11,7 +11,7 @@ var globalSessions *session.Manager
 
 func init() {
 	globalSessions, _ = session.NewManager("memory", "gosessionid", 3600)
-//	go globalSessions.GC()
+	//	go globalSessions.GC()
 
 }
 
@@ -24,14 +24,17 @@ func main() {
 
 	router.OPTIONS("/buses", HandleOptionsRequest)
 	router.OPTIONS("/buses/:license", HandleOptionsRequest)
+	router.OPTIONS("/chargeRecords", HandleOptionsRequest)
 
 	router.GET("/buses", ShowAllBuses)
 	router.GET("/buses/:license", GetBusByLicense)
-	router.POST("/buses",AddBus)
-	router.PUT("/buses/:license",PutBus)
+	router.POST("/buses", AddBus)
+	router.PUT("/buses/:license", PutBus)
 
+	router.GET("/brands", ShowAllBusBrands)
 
-	router.GET("/brands",ShowAllBusBrands)
+	router.POST("/chargeRecords", AddChargeRecord)
+	router.GET("/chargeRecords", ShowAllChargeRecord)
 
 	log.Fatal(router.Run(":8000"))
 }

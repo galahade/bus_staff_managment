@@ -40,26 +40,14 @@ func (*BusBrand) BeforeCreate(scope *gorm.Scope) error {
 }
 
 func (busBrand *BusBrand) Create() error {
-	if !Gdb.NewRecord(*busBrand) {
-		return RecordAlreadyExistError
-	}
-	tempDB := Gdb.Create(busBrand)
-	if tempDB.Error != nil {
-		return tempDB.Error
-	}
-	return nil
+
+	return insertDomain(busBrand)
 
 }
 
 func (bus *Bus) Create() error {
-	if !Gdb.NewRecord(*bus) {
-		return RecordAlreadyExistError
-	}
-	tempDB := Gdb.Create(bus)
-	if tempDB.Error != nil {
-		return tempDB.Error
-	}
-	return nil
+
+	return insertDomain(bus)
 
 }
 

@@ -32,7 +32,7 @@ func AddBus(c *gin.Context) {
 		BadRequestResponse(c, err)
 		return
 	}
-	err = CreateNewBus(&busModel)
+	err = CreateBus(&busModel)
 	if err != nil {
 		BadRequestResponse(c, err)
 		return
