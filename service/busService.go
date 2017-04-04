@@ -36,10 +36,6 @@ func CreateBus(busModel *BusModel) error {
 
 func ChangeBus(busModel *BusModel) error {
 	bus, err := busModel.toDomain()
-	busOriginal := &Bus{BusLicense: bus.BusLicense}
-	busOriginal.QueryByLicense()
-	bus.ID = busOriginal.ID
-	bus.CreatedAt = busOriginal.CreatedAt
 	err = bus.Update()
 	return err
 }
@@ -104,6 +100,7 @@ func (busModel *BusModel) fillFromDomain(bus Bus) {
 
 func (busModel BusModel) toDomain() (bus *Bus, err error) {
 	bus = new(Bus)
+	bus.ID = busModel.ID
 	bus.BusLicense = busModel.License
 	bus.BrandID = busModel.BrandID
 	bus.CustomId = busModel.CustomID

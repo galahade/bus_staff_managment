@@ -4,6 +4,7 @@ import (
 	"gopkg.in/gin-gonic/gin.v1"
 	"net/http"
 	. "github.com/galahade/bus_staff_managment/service"
+
 )
 
 func AddChargeRecord(c *gin.Context) {
@@ -23,8 +24,31 @@ func AddChargeRecord(c *gin.Context) {
 	}));
 }
 
-func ShowAllChargeRecord(c *gin.Context) {
+func PutChargeRecord(c *gin.Context) {
+	chargeRecordModel, err := fillChargeRecordModelByRequest(c)
 	setCORSHeader(c);
+	if err != nil {
+		BadRequestResponse(c, err)
+		return
+	}
+	err = ChangeChargeRecord(&chargeRecordModel)
+	if err != nil {
+		BadRequestResponse(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, wrapperChargeRecord([]ChargeRecordModel{
+		chargeRecordModel,
+	}));
+}
+
+func ShowChargeRecords(c *gin.Context) {
+	setCORSHeader(c);
+
+	query, ok := assembleQuery(c)
+	if ok {
+		c.JSON(http.StatusOK, wrapperChargeRecord(GetChargeRecord(query)))
+		return
+	}
 	c.JSON(http.StatusOK, wrapperChargeRecord(GetAllChargeRecord()));
 }
 
@@ -36,10 +60,25 @@ func wrapperChargeRecord(chargeRecords []ChargeRecordModel) RESTWrapper {
 }
 
 func fillChargeRecordModelByRequest(c *gin.Context) (ChargeRecordModel, error) {
-	var chargeRecordModel ChargeRecordModel
-	requestWrapper := map[string]ChargeRecordModel {
-		"chargeRecord": chargeRecordModel,
+	id := c.Param("id")
+
+	requestWrapper := map[string]*ChargeRecordModel {
 	}
 	err := c.Bind(&requestWrapper)
-	return requestWrapper["chargeRecord"], err
+	if err == nil {
+		if id != ""  {
+			requestWrapper["chargeRecord"].ID = id
+		}
+	}
+	return *requestWrapper["chargeRecord"], err
+}
+
+func assembleQuery(c *gin.Context) (query map[string]interface{}, ok bool) {
+	query = make(map[string]interface{})
+	if c.Query("busID") != "" {
+		query["bus_id"] = c.Query("busID")
+		ok = true
+	}
+
+	return query, ok
 }

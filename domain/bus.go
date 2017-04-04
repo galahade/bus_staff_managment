@@ -40,24 +40,20 @@ func (*BusBrand) BeforeCreate(scope *gorm.Scope) error {
 }
 
 func (busBrand *BusBrand) Create() error {
-
 	return insertDomain(busBrand)
-
 }
 
 func (bus *Bus) Create() error {
-
 	return insertDomain(bus)
-
 }
 
 func (bus *Bus) Update() error {
+	UpdateCreateDate(bus)
 	tempDB := Gdb.Save(bus)
 	if tempDB.Error != nil {
 		return tempDB.Error
 	}
 	return nil
-
 }
 
 func (bus *Bus) QueryByLicense() error {
@@ -72,7 +68,7 @@ func (bus *Bus) QueryByLicense() error {
 
 func (bus Bus) QueryAll() []Bus {
 	buses := []Bus{}
-	Gdb.Find(&buses);
+	Gdb.Order("register_date").Find(&buses);
 	for i, _ := range buses {
 		Gdb.Model(buses[i]).Related(&buses[i].BusBrand, "BrandID")
 	}

@@ -67,3 +67,26 @@ func TestBus_QueryAll(t *testing.T) {
 	}
 }
 
+func TestBus_UpdateCreateDate(t *testing.T) {
+	setGORMShowSQL()
+	bus := &Bus{
+		Domain: Domain{
+			ID: "0cc2b5b3-ba9d-466b-83cd-e15fcaaf545f",
+		},
+		BusLicense:"75090",
+		CustomId:"75090",
+		VehicleIDNumber:"LS4AJB5XXFG002522",
+		EngineNo:"IS5005JJ20150S0174",
+		PersonsCapacity:57,
+		BrandID:"1c4f1929-298d-4301-b4c8-130fbb3208a6",
+	}
+	UpdateCreateDate(bus)
+	assert.NotEmpty(t, bus.ID)
+	assert.NotEmpty(t, bus.CreatedAt)
+	assert.NotEmpty(t, bus.CustomId)
+	assert.NotEmpty(t, bus.VehicleIDNumber)
+	assert.NotEmpty(t, bus.EngineNo)
+	assert.NotEmpty(t, bus.PersonsCapacity)
+	assert.NotEmpty(t, bus.BrandID)
+}
+

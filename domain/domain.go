@@ -58,3 +58,11 @@ func insertDomain(domain interface{}) error {
 	return nil
 
 }
+
+func UpdateCreateDate(domain interface{}) error {
+	Gdb.Select("created_at").First(domain)
+	if err := checkQueryFirstNotNil(domain); err != nil {
+		return err
+	}
+	return nil
+}

@@ -38,6 +38,8 @@ CREATE TABLE `bus_basic` (
   UNIQUE KEY `bus_license_UNIQUE` (`bus_license`),
   KEY `bus_brand_fk_idx` (`brand_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ALTER TABLE bus_basic ADD CONSTRAINT uc_engine_no UNIQUE (engine_no);
+
 
 #Create table bus_brand
 DROP TABLE IF EXISTS `bus_brand`;

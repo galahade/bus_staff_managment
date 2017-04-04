@@ -4,6 +4,7 @@ import (
 	. "github.com/galahade/bus_staff_managment/service"
 	"net/http"
 	"gopkg.in/gin-gonic/gin.v1"
+	"log"
 )
 
 func GetBusByLicense(c *gin.Context) {
@@ -67,15 +68,18 @@ func wrapperBus(buses []BusModel) RESTWrapper {
 }
 
 func fillBusModelByRequest(c *gin.Context) (BusModel, error){
-
+	id := c.Param("id")
 	var busModel BusModel
-	requestWrapper := map[string]BusModel{
-		"bus": busModel,
+	requestWrapper := map[string]*BusModel{
 	}
 	err := c.Bind(&requestWrapper)
 
 	if err == nil {
-		return requestWrapper["bus"], nil
+		if id != ""  {
+			requestWrapper["bus"].ID = id
+			log.Printf("%#v", requestWrapper["bus"])
+			return *requestWrapper["bus"], nil
+		}
 	}
 	return busModel, err
 }

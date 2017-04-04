@@ -23,18 +23,21 @@ func main() {
 	router.GET("/drivers/:sid", GetDriverByStaffID)
 
 	router.OPTIONS("/buses", HandleOptionsRequest)
-	router.OPTIONS("/buses/:license", HandleOptionsRequest)
+	router.OPTIONS("/buses/:id", HandleOptionsRequest)
 	router.OPTIONS("/chargeRecords", HandleOptionsRequest)
+	router.OPTIONS("/chargeRecords/:id", HandleOptionsRequest)
+
 
 	router.GET("/buses", ShowAllBuses)
 	router.GET("/buses/:license", GetBusByLicense)
 	router.POST("/buses", AddBus)
-	router.PUT("/buses/:license", PutBus)
+	router.PUT("/buses/:id", PutBus)
 
 	router.GET("/brands", ShowAllBusBrands)
 
 	router.POST("/chargeRecords", AddChargeRecord)
-	router.GET("/chargeRecords", ShowAllChargeRecord)
+	router.GET("/chargeRecords", ShowChargeRecords)
+	router.PUT("/chargeRecords/:id", PutChargeRecord)
 
 	log.Fatal(router.Run(":8000"))
 }

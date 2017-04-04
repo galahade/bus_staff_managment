@@ -25,8 +25,18 @@ func CreateChargeRecord(chargeRecordModel *ChargeRecordModel) error {
 	return err
 }
 
+func GetChargeRecord(query map[string]interface{}) []ChargeRecordModel {
+	return fillFromChargeRecordDomains(defaultChargeRecord.Query(query))
+}
+
 func GetAllChargeRecord() []ChargeRecordModel {
 	return fillFromChargeRecordDomains(defaultChargeRecord.QueryAll())
+}
+
+func ChangeChargeRecord(chargeRecordModel *ChargeRecordModel) error {
+	chargeRecord, err := chargeRecordModel.toDomain()
+	err = chargeRecord.Update()
+	return err
 }
 
 func fillFromChargeRecordDomains(chargeRecords []ChargeRecord) (chargeRecordModels []ChargeRecordModel) {
