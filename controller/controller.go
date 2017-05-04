@@ -59,7 +59,24 @@ func HandleOptionsRequest(c *gin.Context)  {
 }
 
 func BadRequestResponse(c *gin.Context, err error) {
-	log.Printf("There are errs: %s, when handle this request.", err)
+	log.Printf("There are errs: %s", err)
 	c.JSON(http.StatusBadRequest, err)
+}
+
+func assembleQuery(c *gin.Context) (query map[string]interface{}, ok bool) {
+	query = make(map[string]interface{})
+	if c.Query("busID") != "" {
+		query["bus_id"] = c.Query("busID")
+		ok = true
+	}
+
+	return query, ok
+}
+
+func wrapperResponseJson(url, jsonName string, data interface{}) RESTWrapper {
+	wrapper := NewWrapper();
+	wrapper.setSelf(url)
+	wrapper.setData(jsonName, data)
+	return *wrapper
 }
 

@@ -3,226 +3,102 @@ package domain
 import (
 	"time"
 	"github.com/pborman/uuid"
-	"github.com/galahade/bus_staff_managment/util"
-
-	"database/sql/driver"
-	"strings"
-	"errors"
-	"database/sql"
 	"fmt"
+	"github.com/jinzhu/gorm"
+	"log"
 )
-
-type PhoneNumbers []string
-type JobType byte
 
 type Staff struct {
 	Domain
 	Name                     string
-	StaffIdentity            string       `gorm:"column:staff_id"`
-	JobType                  JobType
+	JobTypeID                string
+	JobType                  JobType           `gorm:"ForeignKey:JobTypeID"`
 	OnboardTime              time.Time
 	PersonalID               string
-	DriverType               string
+	DriverTypeID             string
+	DriverType               DriverType        `gorm:"ForeignKey:DriverTypeID"`
 	IsInternship             bool
-	IsMultiTimeHired         bool
+	IsMultitimeHired         bool
+	IsResign                 bool
 	FirstOnboardTime         time.Time
-	Phone                    PhoneNumbers
-	Department               string
+	Phone                    string
+	DepartmentID             string
+	Department               Department        `gorm:"ForeignKey:DepartmentID"`
 	EmergencyContact         string
-	EmergencyContactPhone    PhoneNumbers
+	EmergencyContactPhone    string
 	EmergencyContactRelation string
 }
 
-func (staff *Staff) GetJobTypeName() (jobType string) {
-	temp := byte(staff.JobType)
-	switch temp {
-	case byte(1):
-		jobType = "司机"
-	case byte(2):
-		jobType = "维修"
-	case byte(4):
-		jobType = "技术"
-	case byte(8):
-		jobType = "保障"
-	case byte(128):
-		jobType = "管理"
-	default:
-		jobType = "未知"
-	}
-	return
+func (*Staff) BeforeCreate(scope *gorm.Scope) error {
+	scope.SetColumn("ID", uuid.New())
+	return nil
 }
 
-func (staff *Staff) GetPhoneString() (sPhone string) {
-	for _, phone := range staff.Phone {
-		if sPhone == "" {
-			sPhone = phone
-		} else {
-			sPhone = sPhone + "," + phone
-		}
-	}
-	return
+func (staff *Staff) Create() error {
+	return insertDomain(staff)
 }
 
-func (staff *Staff) GetECPhoneString() (sPhone string) {
-	for _, phone := range staff.EmergencyContactPhone {
-		if sPhone == "" {
-			sPhone = phone
-		} else {
-			sPhone = sPhone + "," + phone
-		}
-	}
-	return
-}
-
-
-func (staff Staff) InsertString() string {
-	return "INSERT staff SET ID=?, NAME=?, STAFF_ID=?, JOB_TYPE=?, ONBOARD_TIME=?, PERSONAL_ID=?, DRIVER_TYPE=?, " +
-		"IS_INTERNSHIP=?, IS_MULTITIME_HIRED=?, FIRST_ONBOARD_TIME=?, PHONE=?, DEPARTMENT=?, EMERGENCY_CONTACT=?, " +
-		"EMERGENCY_CONTACT_PHONE=?, EMERGENCY_CONTACT_RELATION=?"
-}
-func (staff Staff) QueryAllString() string {
-	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
-		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
-		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM staff"
-}
-func (staff Staff) QueryByIDString() string {
-	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
-		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
-		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM staff WHERE ID = ?"
-}
-func (staff Staff) QueryByStaffIDString() string {
-	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
-		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
-		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM staff WHERE STAFF_ID = ?"
-}
-func (staff Staff)  QueryByJobTypeString() string {
-	return "SELECT ID, NAME, STAFF_ID, JOB_TYPE, ONBOARD_TIME, PERSONAL_ID, DRIVER_TYPE, " +
-		"IS_INTERNSHIP, IS_MULTITIME_HIRED, FIRST_ONBOARD_TIME, PHONE, DEPARTMENT, EMERGENCY_CONTACT, " +
-		"EMERGENCY_CONTACT_PHONE, EMERGENCY_CONTACT_RELATION FROM staff WHERE JOB_TYPE = ?"
-}
-
-func (staff Staff) DeleteByIdString() string {
-	return "DELETE FROM staff WHERE ID = ?"
-}
-// map go type to db type
-func (phoneNumbers PhoneNumbers) Value() (driver.Value, error) {
-	var phones string
-	for _, phone := range phoneNumbers {
-		if phones == "" {
-			phones = phone
-		} else {
-			phones = phones + "," + phone
-		}
-	}
-	return phones, nil
-}
-func (jobType JobType) Value() (driver.Value, error) {
-	var jobTypeDB []byte
-	jobTypeDB = append(jobTypeDB, byte(jobType))
-	return jobTypeDB, nil
-}
-
-func (phoneNumbers *PhoneNumbers) Scan(value interface{}) error {
-	if value == nil {
-		*phoneNumbers = make([]string, 0)
-		return nil
-	}
-	if phones, err := driver.String.ConvertValue(value); err == nil {
-		if v, ok := phones.(string); ok {
-			results := strings.Split(v, ",")
-			*phoneNumbers = results
-		} else if v, ok := phones.([]byte); ok {
-			temp := string(v)
-			results := strings.Split(temp, ",")
-			*phoneNumbers = results
-		}
-		return nil
-	}
-	return errors.New("failed to scan PhoneNumbers.")
-}
-func (jobType *JobType) Scan(value interface{}) error {
-	if value == nil {
-		*jobType = 0
-		return nil
-	}
-	if v, ok := value.([]byte); ok {
-		*jobType = JobType(v[0])
-		return nil
-	}
-	return errors.New("failed to scan JobType.")
-}
-
-func (staff *Staff) Insert() {
-
-	stmtP, err := db.Prepare(staff.InsertString())
-	util.CheckErr(err)
-
-	res, err := stmtP.Exec(uuid.NewUUID(), staff.Name, staff.StaffIdentity, staff.JobType, staff.OnboardTime,
-		staff.PersonalID, staff.DriverType, staff.IsInternship, staff.IsMultiTimeHired, staff.FirstOnboardTime,
-		staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone, staff.EmergencyContactRelation)
-	util.CheckErr(err)
-
-	if affected, _ := res.RowsAffected(); affected == 0 {
-		fmt.Errorf("Fail to insert staff data into db.\n")
-	}
-}
-
-func (staff *Staff) QueryByID() {
-	stmtP, err := db.Prepare(staff.QueryByIDString())
-	util.CheckErr(err)
-
-	err = stmtP.QueryRow(staff.ID).Scan(&staff.ID, &staff.Name, &staff.StaffIdentity, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
-		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
-		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
-	util.CheckErr(err)
-
-}
-
-func (staff *Staff) QueryByStaffID() error {
-	stmtP, err := db.Prepare(staff.QueryByStaffIDString())
-	util.CheckErr(err)
-
-	err = stmtP.QueryRow(staff.StaffIdentity).Scan(&staff.ID, &staff.Name, &staff.StaffIdentity, &staff.JobType, &staff.OnboardTime, &staff.PersonalID, &staff.DriverType,
-		&staff.IsInternship, &staff.IsMultiTimeHired, &staff.FirstOnboardTime, &staff.Phone, &staff.Department, &staff.EmergencyContact,
-		&staff.EmergencyContactPhone, &staff.EmergencyContactRelation)
-	if(err == sql.ErrNoRows) {
-		return err
-	} else {
-		util.CheckErr(err)
+func (staff *Staff) Update() error {
+	UpdateCreateDate(staff)
+	tempDB := Gdb.Save(staff)
+	if tempDB.Error != nil {
+		return tempDB.Error
 	}
 	return nil
 }
 
-func (staff *Staff) QueryAll() []Staff {
-	rows, err := db.Query(staff.QueryAllString())
-	util.CheckErr(err)
-	return scanQueryResult(rows)
-
+func (staff *Staff) UpdateToResign() error {
+	tempDB := Gdb.Model(&staff).Update("is_resign", true)
+	if tempDB.Error != nil {
+		return tempDB.Error
+	}
+	return nil
 }
 
-func (staff Staff) QueryByJobType(jobType byte) []Staff {
-	stmtP, err := db.Prepare(staff.QueryByJobTypeString())
-	util.CheckErr(err)
-
-	rows, err := stmtP.Query(jobType)
-
-	return scanQueryResult(rows)
+func (Staff) QueryByJoin(join, condition string) []Staff {
+	log.Printf("join clause is: %s", join)
+	log.Printf("where clause is: %s", condition)
+	staffs := []Staff{}
+	Gdb.Joins(join).Where(condition).Find(&staffs)
+	for i := range staffs {
+		Gdb.Model(staffs[i]).Related(&staffs[i].JobType).Related(&staffs[i].DriverType).Related(&staffs[i].Department)
+	}
+	return staffs
 }
 
-func (staff *Staff) DeleteById() {
-	stmtP, err := db.Prepare(staff.DeleteByIdString())
-	util.CheckErr(err)
-
-	res, err := stmtP.Exec(staff.ID)
-	checkChangeDBFailed(res, err, "")
+func (Staff) Query(query map[string]interface{}, isNot bool) []Staff {
+	staffs := []Staff{}
+	db := Gdb.Where("is_resign = false")
+	if (query != nil) {
+		if(isNot) {
+			db = db.Not(query)
+		} else {
+			db = db.Where(query)
+		}
+	}
+	db.Find(&staffs).Order("staff_id")
+	for i := range staffs {
+		Gdb.Model(staffs[i]).Related(&staffs[i].JobType).Related(&staffs[i].DriverType).Related(&staffs[i].Department)
+	}
+	return staffs
 }
+
+func (staff *Staff) QueryUnique() error {
+	Gdb.First(staff).Related(&staff.JobType).Related(&staff.DriverType).Related(&staff.Department)
+	if err := checkQueryFirstNotNil(staff); err != nil {
+		return err
+	}
+	return nil
+}
+
 
 func (staff Staff) String() string {
-	return fmt.Sprintf("Staff data are : \n id : %s,\n name : %s,\n staffId : %s,\n jobType : %d,\n onboardTime : %s,\n PersonalId : %s,\n " +
-		"DriverType : %s,\n IsInternship : %t,\n isMultiTimeHired : %t,\n firstOnboardTime : %s,\n phone : %s,\n department : %s,\n " +
+	return fmt.Sprintf("Staff data are : \n id : %s,\n name : %s,\n jobType : %#v,\n onboardTime : %s,\n PersonalId : %s,\n " +
+		"DriverType : %#v,\n IsInternship : %t,\n isMultiTimeHired : %t,\n firstOnboardTime : %s,\n phone : %s,\n department : %#v,\n " +
 		"emergencyContact : %s,\n emergencyContactPhone : %s,\n emergencyContactRelation : %s,\n",
-		staff.ID, staff.Name, staff.StaffIdentity, staff.JobType, staff.OnboardTime, staff.PersonalID, staff.DriverType, staff.IsInternship,
-		staff.IsMultiTimeHired, staff.FirstOnboardTime, staff.Phone, staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone,
+		staff.ID, staff.Name, staff.JobType, staff.OnboardTime, staff.PersonalID,
+		staff.DriverType, staff.IsInternship, staff.IsMultitimeHired, staff.FirstOnboardTime, staff.Phone,
+		staff.Department, staff.EmergencyContact, staff.EmergencyContactPhone,
 		staff.EmergencyContactRelation)
 }
 
@@ -231,7 +107,7 @@ func (staff Staff) IsQualified() (result bool) {
 	if staff.IsInternship {
 		return
 	}
-	if strings.Contains(staff.DriverType, "A1") || strings.Contains(staff.DriverType, "A3") {
+	if (staff.DriverType.Name == "A1" || staff.DriverType.Name == "A3") {
 		result = true
 	}
 	return
@@ -239,25 +115,8 @@ func (staff Staff) IsQualified() (result bool) {
 
 func (staff Staff) NeedUpgrade() (result bool) {
 	result = false
-	if !staff.IsQualified() && !staff.IsInternship && staff.Department == "运营" {
+	if !staff.IsQualified() && !staff.IsInternship && staff.JobType.Name == "司机" {
 		result = true
 	}
 	return
-}
-
-func scanQueryResult(rows *sql.Rows) []Staff {
-
-	var staffs []Staff
-	for rows.Next() {
-		staffP := new(Staff)
-
-		err = rows.Scan(&staffP.ID, &staffP.Name, &staffP.StaffIdentity, &staffP.JobType, &staffP.OnboardTime, &staffP.PersonalID,
-			&staffP.DriverType, &staffP.IsInternship, &staffP.IsMultiTimeHired, &staffP.FirstOnboardTime,
-			&staffP.Phone, &staffP.Department, &staffP.EmergencyContact, &staffP.EmergencyContactPhone, &staffP.EmergencyContactRelation)
-		util.CheckErr(err)
-
-		staffs = append(staffs, *staffP)
-	}
-
-	return staffs
 }

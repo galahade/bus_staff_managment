@@ -73,12 +73,3 @@ func fillChargeRecordModelByRequest(c *gin.Context) (ChargeRecordModel, error) {
 	return *requestWrapper["chargeRecord"], err
 }
 
-func assembleQuery(c *gin.Context) (query map[string]interface{}, ok bool) {
-	query = make(map[string]interface{})
-	if c.Query("busID") != "" {
-		query["bus_id"] = c.Query("busID")
-		ok = true
-	}
-
-	return query, ok
-}
