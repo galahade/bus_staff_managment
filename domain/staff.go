@@ -5,7 +5,6 @@ import (
 	"github.com/pborman/uuid"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"log"
 )
 
 type Staff struct {
@@ -55,11 +54,19 @@ func (staff *Staff) UpdateToResign() error {
 	return nil
 }
 
-func (Staff) QueryByJoin(join, condition string) []Staff {
-	log.Printf("join clause is: %s", join)
-	log.Printf("where clause is: %s", condition)
+func (staff Staff) QueryByJoin(joins, conditions []string) []Staff {
 	staffs := []Staff{}
-	Gdb.Joins(join).Where(condition).Find(&staffs)
+	db := Gdb.Model(staff)
+	for i := range joins {
+		db = db.Joins(joins[i])
+	}
+
+	for i := range conditions {
+		db = db.Where(conditions[i])
+	}
+
+	db.Find(&staffs)
+
 	for i := range staffs {
 		Gdb.Model(staffs[i]).Related(&staffs[i].JobType).Related(&staffs[i].DriverType).Related(&staffs[i].Department)
 	}

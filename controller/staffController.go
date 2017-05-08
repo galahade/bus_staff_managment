@@ -69,7 +69,7 @@ func getDriverByType(c *gin.Context) {
 	switch c.Query("driverType") {
 	case "qualified":
 		c.JSON(http.StatusOK,wrapperResponseJson("api.bus.com/staffs", "staffs", GetAllQualifiedDrivers()));
-	case "internship":
+	case "isInternship":
 		c.JSON(http.StatusOK,wrapperResponseJson("api.bus.com/staffs", "staffs", GetAllInternshipDrivers()));
 	default:
 		c.JSON(http.StatusOK,wrapperResponseJson("api.bus.com/staffs", "staffs", GetAllDrivers()));

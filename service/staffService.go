@@ -74,8 +74,7 @@ func FetchStaffByID(id string) (StaffModel, bool) {
 }
 
 func GetAllDrivers() []StaffModel {
-	query := make(map[string]interface{})
-	return fillFromStaffDomains(queryDriver(query))
+	return fillFromStaffDomains(queryDriver(nil, nil))
 }
 
 func GetAllStaffs() []StaffModel {
@@ -93,19 +92,37 @@ func GetSupportStaffs() []StaffModel {
 	}
 	(&dic1).QueryUnique()
 	(&dic2).QueryUnique()
-	return fillFromStaffDomains(defaultStaff.QueryByJoin("LEFT JOIN dictionary ON dictionary.id = job_type_id", fmt.Sprintf("dictionary.id = '%s' OR dictionary.id = '%s'", dic1.ID, dic2.ID)))
+	joins := make([]string,1)
+	joins[0] = "LEFT JOIN dictionary ON dictionary.id = job_type_id"
+	conditions := make([]string,1)
+	conditions[0] =  fmt.Sprintf("dictionary.id = '%s' OR dictionary.id = '%s'", dic1.ID, dic2.ID)
+	return fillFromStaffDomains(queryDriver(joins, conditions))
 }
 
-/*this method need correct*/
 func GetAllQualifiedDrivers() []StaffModel {
-	query := make(map[string]interface{})
-	return fillFromStaffDomains(queryDriver(query))
+	driverType1 :=  Dictionary{
+		Name: "A1",
+		Type: 3,
+	}
+	driverType2 :=  Dictionary{
+		Name: "A3",
+		Type: 3,
+	}
+	(&driverType1).QueryUnique()
+	(&driverType2).QueryUnique()
+	joins := make([]string, 1)
+	joins[0] = "LEFT JOIN dictionary d2 ON d2.id = staff.driver_type_id"
+	conditions := make([]string, 2)
+	conditions[0] =  fmt.Sprintf("d2.id = '%s' OR d2.id = '%s'", driverType1.ID, driverType2.ID)
+	conditions[1] = "is_internship = false"
+
+     	return fillFromStaffDomains(queryDriver(joins, conditions))
 }
 
 func GetAllInternshipDrivers() [] StaffModel {
-	query := make(map[string]interface{})
-	query["is_internship"] = true
-	return fillFromStaffDomains(queryDriver(query))
+	conditions := make([]string, 1)
+	conditions[0] =  "is_internship = true"
+	return fillFromStaffDomains(queryDriver(nil, conditions))
 }
 
 func fillFromStaffDomains(staffs []Staff) (staffModels []StaffModel) {
@@ -202,11 +219,26 @@ func (staffModel StaffModel) toDomain() (staff *Staff, err error) {
 	return staff, nil
 }
 
-func queryDriver(query map[string]interface{}) []Staff {
-	query["job_type"] = 1
-	staffs := defaultStaff.Query(query, false)
-	return staffs
-}
+func queryDriver(subJoins, query []string) []Staff {
+	dic := Dictionary{
+		Name: "司机",
+		Type: 1,
+	}
+	(&dic).QueryUnique()
 
+	joins := make([]string, len(subJoins) + 1)
+	joins[0] = "LEFT JOIN dictionary ON dictionary.id = job_type_id"
+	for _, join := range subJoins {
+		joins = append(joins, join)
+	}
+	conditions := make([]string, len(query) + 1)
+	conditions[0] =  fmt.Sprintf("dictionary.id = '%s'", dic.ID)
+
+	for _, condition := range query {
+		conditions = append(conditions, condition)
+	}
+
+	return defaultStaff.QueryByJoin(joins, conditions)
+}
 
 
